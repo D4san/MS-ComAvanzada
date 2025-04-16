@@ -1,0 +1,9 @@
+numpy
+matplotlib
+scipy
+numba
+emcee
+corner
+ipywidgets
+joblib
+mpi4py
