@@ -23,7 +23,7 @@ if rank == 0:
 
 # --- Parámetros del MCMC y de la simulación ---
 n_dim = 6
-n_total_walkers = 700  # Total de walkers deseados para toda la cadena
+n_total_walkers = 200  # Total de walkers deseados para toda la cadena
 # Distribuimos equitativamente entre procesos
 walkers_per_proc = n_total_walkers // size
 

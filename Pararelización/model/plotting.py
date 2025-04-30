@@ -1,6 +1,8 @@
 # model/plotting.py
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd # Añadido
+import os           # Añadido
 from model.simulation import simulate_daisyworld
 
 def plot_recovered_simulations(theta_median, theta_last, labels,
@@ -72,3 +74,135 @@ def plot_recovered_simulations(theta_median, theta_last, labels,
     plt.show()
     
     return fig
+
+
+def plot_scaling_results(base_dir='..'): # Añadir base_dir para flexibilidad
+    """
+    Genera gráficos comparando el tiempo de ejecución de diferentes métodos
+    (Secuencial, Joblib, MPI) vs. número de walkers, y la escalabilidad de MPI
+    vs. número de procesos.
+
+    Lee datos desde archivos CSV ubicados relativemente a base_dir.
+
+    Args:
+        base_dir (str): Directorio base desde donde se buscan 'data' y 'plots'.
+                        Por defecto es '..', asumiendo que plotting.py está en 'model/'.
+    """
+    data_dir = os.path.join(base_dir, "data")
+    plots_dir = os.path.join(base_dir, "plots")
+    sequential_csv = os.path.join(base_dir, "results_sequential.csv") # Ajustado
+    joblib_csv = os.path.join(base_dir, "results_joblib.csv")       # Ajustado
+    mpi_scaling_csv = os.path.join(data_dir, "results_mpi_scaling.csv")
+    # Usar results_mpi.csv si existe para comparar walkers MPI
+    mpi_incremental_csv = os.path.join(base_dir, "results_mpi.csv") 
+
+    # Crear directorio de plots si no existe
+    if not os.path.exists(plots_dir):
+        try:
+            os.makedirs(plots_dir)
+            print(f"Directorio creado: {plots_dir}")
+        except OSError as e:
+            print(f"Error creando directorio {plots_dir}: {e}")
+            return # Salir si no se puede crear el directorio
+
+    plt.style.use('seaborn-v0_8-darkgrid') # Estilo de gráfico
+
+    # --- Gráfico 1: Tiempo vs. Número de Walkers --- 
+    plt.figure(figsize=(10, 6))
+    plot1_generated = False
+
+    try:
+        df_seq = pd.read_csv(sequential_csv)
+        plt.plot(df_seq['n_walkers'], df_seq['time'], marker='o', linestyle='-', label='Secuencial')
+        plot1_generated = True
+    except FileNotFoundError:
+        print(f"Advertencia: No se encontró {sequential_csv}")
+
+    try:
+        df_joblib = pd.read_csv(joblib_csv)
+        plt.plot(df_joblib['n_walkers'], df_joblib['time'], marker='s', linestyle='--', label='Joblib (CPU)')
+        plot1_generated = True
+    except FileNotFoundError:
+        print(f"Advertencia: No se encontró {joblib_csv}")
+
+    # Intentar añadir datos de MPI si existen y tienen variación de walkers (desde results_mpi.csv)
+    try:
+        df_mpi_inc = pd.read_csv(mpi_incremental_csv)
+        # Asumiendo que results_mpi.csv tiene 'n_walkers' y 'time'
+        if 'n_walkers' in df_mpi_inc.columns and 'time' in df_mpi_inc.columns:
+            # Agrupar por n_walkers y tomar la media del tiempo (si hay múltiples corridas por walker)
+            mpi_time_vs_walkers = df_mpi_inc.groupby('n_walkers')['time'].mean().reset_index()
+            if len(mpi_time_vs_walkers) > 1: # Solo graficar si hay más de un punto
+                plt.plot(mpi_time_vs_walkers['n_walkers'], mpi_time_vs_walkers['time'], marker='^', linestyle=':', label='MPI (Variable Walkers)')
+                plot1_generated = True
+        else:
+             print(f"Advertencia: {mpi_incremental_csv} no tiene las columnas 'n_walkers' o 'time'.")
+    except FileNotFoundError:
+        print(f"Advertencia: No se encontró {mpi_incremental_csv} para comparación de walkers MPI.")
+    except KeyError as e:
+        print(f"Advertencia: Error de clave '{e}' al procesar {mpi_incremental_csv}.")
+
+    if plot1_generated:
+        plt.xlabel("Número Total de Walkers")
+        plt.ylabel("Tiempo de Ejecución (segundos)")
+        plt.title("Comparación de Tiempo de Ejecución vs. Número de Walkers")
+        plt.legend()
+        plt.grid(True)
+        plot1_filename = os.path.join(plots_dir, "time_vs_walkers_comparison.png")
+        try:
+            plt.savefig(plot1_filename, dpi=300)
+            print(f"Gráfico 1 guardado en: {plot1_filename}")
+        except Exception as e:
+            print(f"Error guardando gráfico 1 ({plot1_filename}): {e}")
+        # plt.show() # Descomentar si se quiere mostrar interactivamente
+        plt.close()
+    else:
+        print("No se generó el Gráfico 1 porque no se encontraron datos suficientes.")
+        plt.close() # Cerrar la figura vacía
+
+    # --- Gráfico 2: Tiempo vs. Número de Procesos MPI (para 700 walkers) ---
+    try:
+        df_mpi_scale = pd.read_csv(mpi_scaling_csv)
+        # Asegurarse que las columnas necesarias existen
+        if not all(col in df_mpi_scale.columns for col in ['n_total_walkers', 'n_processes', 'time']):
+             raise KeyError("Faltan columnas requeridas en results_mpi_scaling.csv")
+
+        # Filtrar por 700 walkers (o el valor que se usó en mpi_process_scaling.py)
+        # Podríamos hacerlo más genérico si hubiera múltiples corridas de escalabilidad
+        target_walkers = 700 # Asumiendo que la escalabilidad se midió con 700
+        df_mpi_target = df_mpi_scale[df_mpi_scale['n_total_walkers'] == target_walkers]
+
+        if not df_mpi_target.empty:
+            plt.figure(figsize=(10, 6))
+            # Ordenar por número de procesos para el gráfico
+            df_mpi_target = df_mpi_target.sort_values(by='n_processes')
+            plt.plot(df_mpi_target['n_processes'], df_mpi_target['time'], marker='o', linestyle='-', color='green')
+            plt.xlabel("Número de Procesos MPI")
+            plt.ylabel("Tiempo de Ejecución (segundos)")
+            plt.title(f"Escalabilidad MPI: Tiempo vs. Número de Procesos ({target_walkers} Walkers)")
+            # Asegurar ticks en los números de procesos usados, si son pocos
+            unique_processes = df_mpi_target['n_processes'].unique()
+            if len(unique_processes) < 15: # Poner ticks explícitos si no son demasiados
+                 plt.xticks(unique_processes)
+            plt.grid(True)
+            plot2_filename = os.path.join(plots_dir, "mpi_scaling_time_vs_processes.png")
+            try:
+                plt.savefig(plot2_filename, dpi=300)
+                print(f"Gráfico 2 guardado en: {plot2_filename}")
+            except Exception as e:
+                print(f"Error guardando gráfico 2 ({plot2_filename}): {e}")
+            # plt.show() # Descomentar si se quiere mostrar interactivamente
+            plt.close()
+        else:
+            print(f"Advertencia: No se encontraron datos para {target_walkers} walkers en {mpi_scaling_csv}")
+
+    except FileNotFoundError:
+        print(f"Advertencia: No se encontró el archivo de escalabilidad MPI: {mpi_scaling_csv}")
+    except KeyError as e:
+        print(f"Error: Falta la columna '{e}' o estructura incorrecta en {mpi_scaling_csv}")
+    except Exception as e:
+        print(f"Error inesperado procesando {mpi_scaling_csv}: {e}")
+
+    print("Proceso de graficación de escalabilidad completado.")
+
+# --- Fin de la nueva función ---
