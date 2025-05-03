@@ -59,5 +59,4 @@ try:
 except Exception as e:
     print(f"Error al guardar el gráfico en {output_plot_path}: {e}")
 
-# Mostrar el gráfico (opcional)
 # plt.show()

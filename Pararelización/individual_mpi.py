@@ -1,5 +1,3 @@
-# experiment_mpi_mcmc_gather.py
-
 from mpi4py import MPI
 import numpy as np
 import emcee
@@ -67,7 +65,7 @@ end_local = MPI.Wtime()
 
 local_time = end_local - start_local
 
-# Cada proceso obtiene su cadena (flattened: de forma 2D: (n_samples*n_local_walkers, n_dim))
+# Cada proceso obtiene su cadena
 local_chain = sampler.get_chain(flat=True)
 
 # --- 3. Gather de las cadenas completas ---
@@ -124,7 +122,6 @@ if rank == 0:
                                target_black=target_black, target_white=target_white,
                                save_fig=True, filename="recovered_simulation_mpi.png")
     
-    # Opcional: guardar resultados en CSV
     results = {
        'n_total_walkers': n_total_walkers,
        'n_walkers_por_proc': walkers_per_proc,

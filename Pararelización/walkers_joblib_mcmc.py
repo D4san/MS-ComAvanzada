@@ -1,5 +1,3 @@
-# experiment_joblib_mcmc.py
-
 import time
 import numpy as np
 import emcee
@@ -8,34 +6,32 @@ import corner
 from tqdm import tqdm
 import pandas as pd
 
-# Importa la función run_mcmc que usa JoblibPool internamente
 from model.mcmc import run_mcmc
 from model.simulation import simulate_daisyworld
 from model.plotting import plot_recovered_simulations
 
-# Lista de diferentes números de walkers a evaluar
 walker_values = [50, 100, 200, 300, 400, 500, 700]
 n_dim = 6
 n_burn_in = 200
 n_samples = 700
 
 # Parámetros fijos y objetivos para la simulación de Daisyworld
-fixed_T_opt = 50     # Temperatura óptima
-fixed_T_tol = 17.5   # Tolerancia
-fixed_A_bare = 0.5   # Albedo del suelo desnudo
-target_black = 0.4   # Cobertura deseada para margaritas negras
-target_white = 0.4   # Cobertura deseada para margaritas blancas
+fixed_T_opt = 50
+fixed_T_tol = 17.5
+fixed_A_bare = 0.5
+target_black = 0.4
+target_white = 0.4
 
-results = []  # Lista para almacenar tiempos y errores
+results = []
 
 for n_walkers in tqdm(walker_values, desc="Evaluando número de walkers (Joblib)"):
     initial_positions = np.column_stack([
-        np.random.uniform(0.1, 3.0, n_walkers),    # L
-        np.random.uniform(0.01, 0.9, n_walkers),    # y_mort
-        np.random.uniform(0, 1, n_walkers),         # a_black_init
-        np.random.uniform(0, 1, n_walkers),         # a_white_init
-        np.random.uniform(0, 1, n_walkers),         # A_black
-        np.random.uniform(0, 1, n_walkers)          # A_white
+        np.random.uniform(0.1, 3.0, n_walkers),
+        np.random.uniform(0.01, 0.9, n_walkers),
+        np.random.uniform(0, 1, n_walkers),
+        np.random.uniform(0, 1, n_walkers),
+        np.random.uniform(0, 1, n_walkers),
+        np.random.uniform(0, 1, n_walkers)
     ])
 
     start_time = time.time()
@@ -97,14 +93,14 @@ plt.show()
 df = pd.DataFrame(results)
 df.to_csv("results_joblib.csv", index=False)
 
-# Generar y guardar un corner plot para el último experimento (p.ej., n_walkers = 700)
+# Generar y guardar un corner plot para el último experimento
 fig_corner = corner.corner(samples, labels=["L", "y_mort", "a_black_init", "a_white_init", "A_black", "A_white"],
                            bins=30, show_titles=True, quantiles=[0.16, 0.5, 0.84])
 fig_corner.suptitle("Distribución Posterior MCMC (Joblib, 700 Walkers)", fontsize=20)
 fig_corner.savefig("corner_joblib.png", dpi=300)
 plt.show()
 
-# Generar y guardar el gráfico de coverage and temps usando los parámetros recuperados
+# Generar y guardar el gráfico de simulación recuperada
 plot_recovered_simulations(theta_median, theta_median,
                            labels=["L", "y_mort", "a_black_init", "a_white_init", "A_black", "A_white"],
                            fixed_T_opt=fixed_T_opt, fixed_T_tol=fixed_T_tol, fixed_A_bare=fixed_A_bare,

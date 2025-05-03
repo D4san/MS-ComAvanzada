@@ -1,4 +1,3 @@
-# main_joblib_mcmc.py
 import numpy as np
 import corner
 import matplotlib.pyplot as plt
@@ -38,14 +37,13 @@ def main():
     plt.show()
     
     # --- Parámetros fijos y objetivos para la simulación ---
-    fixed_T_opt = 50     # Ejemplo: Temperatura óptima fija
+    fixed_T_opt = 50     # Temperatura óptima fija
     fixed_T_tol = 17.5   # Tolerancia
     fixed_A_bare = 0.5   # Albedo del suelo desnudo
     target_black = 0.4   # Cobertura deseada para margaritas negras
     target_white = 0.4   # Cobertura deseada para margaritas blancas
     
     # --- Gráfico de cobertura y temperatura con los parámetros recuperados ---
-    # Se asume que plot_recovered_simulations muestra ambas gráficas y guarda la figura.
     plot_recovered_simulations(theta_median, theta_median, labels,
                                fixed_T_opt, fixed_T_tol, fixed_A_bare,
                                target_black, target_white,

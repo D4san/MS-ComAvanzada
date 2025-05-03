@@ -5,7 +5,7 @@ import pandas as pd # Añadido
 import os           # Añadido
 from model.simulation import simulate_daisyworld
 
-def plot_recovered_simulations(theta_median, theta_last, labels,
+def plot_recovered_simulations(theta_median, labels,
                                fixed_T_opt, fixed_T_tol, fixed_A_bare,
                                target_black, target_white,
                                save_fig=False, filename="recovered_simulation.png"):
@@ -16,7 +16,6 @@ def plot_recovered_simulations(theta_median, theta_last, labels,
     Args:
         theta_median (array_like): Parámetros recuperados (mediana) en el orden
             [L, y_mort, a_black_init, a_white_init, A_black, A_white].
-        theta_last (array_like): (No necesariamente usado si se quiere solo la mediana).
         labels (list): Lista de nombres de parámetros.
         fixed_T_opt, fixed_T_tol, fixed_A_bare: Valores fijos para la simulación.
         target_black, target_white: Valores deseados de cobertura para margaritas negras y blancas.

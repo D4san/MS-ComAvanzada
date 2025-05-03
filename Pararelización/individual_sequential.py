@@ -1,10 +1,8 @@
-# main_sequential_mcmc.py
 import numpy as np
 import emcee
 import corner
 import matplotlib.pyplot as plt
 
-# Se importan las funciones definidas en model/mcmc.py y model/plotting.py
 from model.mcmc import log_probability
 from model.plotting import plot_recovered_simulations
 
@@ -47,7 +45,6 @@ def main():
     plt.show()
     
     # --- Parámetros para los gráficos de cobertura y temperatura ---
-    # Estos valores fijos y objetivos se pueden definir según tus necesidades.
     fixed_T_opt   = 50     # Temperatura óptima fija
     fixed_T_tol   = 17.5   # Tolerancia fija
     fixed_A_bare  = 0.5    # Albedo del suelo desnudo fijo
@@ -55,10 +52,6 @@ def main():
     target_white  = 0.4    # Cobertura deseada para margaritas blancas
 
     # --- Generar y guardar el gráfico de coverage y temperature con los parámetros recuperados ---
-    # La función plot_recovered_simulations se encarga de:
-    # - Realizar una nueva simulación usando los parámetros recuperados.
-    # - Graficar la evolución de la cobertura y la temperatura.
-    # - Añadir en la gráfica de cobertura una línea horizontal en el valor deseado.
     fig_recovered = plot_recovered_simulations(theta_median, theta_median, labels,
                                                fixed_T_opt, fixed_T_tol, fixed_A_bare,
                                                target_black, target_white,
