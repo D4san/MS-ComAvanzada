@@ -39,7 +39,6 @@ target_white = 0.4
 
 # --- 1. Root genera las posiciones iniciales y las reparte ---
 if rank == 0:
-    np.random.seed(42)
     initial_positions = np.column_stack([
         np.random.uniform(0.1, 3.0, n_total_walkers),    # L
         np.random.uniform(0.01, 0.9, n_total_walkers),    # y_mort

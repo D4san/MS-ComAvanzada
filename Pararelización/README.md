@@ -27,14 +27,16 @@ El repositorio se organiza de la siguiente manera:
     -   `simulation.py`: Función principal para ejecutar una simulación de Daisyworld.
     -   `mcmc.py`: Funciones relacionadas con el MCMC (log_probability, ejecución con Joblib).
     -   `plotting.py`: Funciones para generar gráficos específicos del modelo.
--   `walkers_sequential_mcmc.py`: Script principal para ejecutar la batería de experimentos MCMC de forma **secuencial** con diferente número de walkers (50, 100, 200, 300, 400, 500, 700). Registra tiempos y errores, y genera gráficos y CSV de resultados (`results_sequential.csv`, `results_sequential.png`, `corner_sequential.png`, `recovered_simulation_sequential.png`).
--   `walkers_joblib_mcmc.py`: Script principal para ejecutar la batería de experimentos MCMC usando **Joblib** para paralelizar en CPU, con diferente número de walkers. Registra tiempos y errores, y genera gráficos y CSV de resultados (`results_joblib.csv`, `results_joblib.png`, `corner_joblib.png`, `recovered_simulation_joblib.png`).
--   `walkers_mpi_mcmc.py`: Script principal para ejecutar un experimento MCMC usando **MPI** para paralelización distribuida. Este script está diseñado para ejecutarse con un número específico de walkers (configurable dentro del script) y varios procesos MPI. Guarda los resultados de forma incremental en `results_mpi_incremental.csv` y genera gráficos (`corner_mpi_gran_cadena.png`, `recovered_simulation_mpi.png`).
--   `individual_sequential.py`, `individual_joblib.py`, `individual_mpi.py`: Scripts de prueba para ejecutar una única simulación MCMC con un número fijo de walkers para cada estrategia, útiles para depuración o pruebas rápidas.
--   `plot_times.py`: Script para generar un gráfico comparativo (`comparacion_estrategias_mcmc.png`) de los tiempos de ejecución de las tres estrategias, leyendo los archivos CSV generados por los scripts `walkers_*`.
+-   `walkers_sequential_mcmc.py`: Script principal para ejecutar la batería de experimentos MCMC de forma **secuencial**.
+-   `walkers_joblib_mcmc.py`: Script principal para ejecutar la batería de experimentos MCMC usando **Joblib** (paralelización en CPU).
+-   `walkers_mpi_mcmc.py`: Script principal para ejecutar la batería de experimentos MCMC usando **MPI** (paralelización distribuida).
+-   `individual_sequential.py`, `individual_joblib.py`, `individual_mpi.py`: Scripts para ejecutar una única simulación MCMC para cada estrategia (depuración/pruebas).
+-   `plot_times.py`: Script para generar un gráfico comparativo de tiempos de ejecución de las estrategias.
+-   `plot_mpi_scaling.py`: Script para generar gráficos específicos de la escalabilidad de MPI.
 -   `results/`: Carpeta que contiene los resultados generados.
     -   `data/`: Archivos CSV con los datos numéricos de los experimentos.
-    -   `plots/`: Archivos PNG con los gráficos generados (comparativas, corner plots, simulaciones recuperadas).
+    -   `plots/`: Archivos PNG con los gráficos generados.
+
 
 ## Metodología Experimental
 

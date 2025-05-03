@@ -11,7 +11,6 @@ from model.plotting import plot_recovered_simulations
 def main():
     n_dim = 6
     n_walkers = 500
-    np.random.seed(42)
     initial_positions = np.column_stack([
         np.random.uniform(0.1, 3.0, n_walkers),    # L
         np.random.uniform(0.01, 0.9, n_walkers),    # y_mort

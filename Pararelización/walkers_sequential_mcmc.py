@@ -34,8 +34,6 @@ results = []
 # Se recorre la lista de walkers usando tqdm para visualizar el progreso
 for n_walkers in tqdm(walker_values, desc="Evaluando número de walkers"):
     
-    # Fijamos la semilla para reproducibilidad en cada iteración
-    np.random.seed(42)
     
     # Generar posiciones iniciales para los walkers.
     initial_positions = np.column_stack([

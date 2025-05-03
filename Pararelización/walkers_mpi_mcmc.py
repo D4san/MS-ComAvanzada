@@ -52,7 +52,6 @@ if rank == 0 and not os.path.isfile(csv_filename):
 # 1. Generación y Scatter de Posiciones Iniciales
 # ------------------------------------
 if rank == 0:
-    np.random.seed(42)  # Fijamos semilla para reproducibilidad
     initial_positions = np.column_stack([
         np.random.uniform(0.1, 3.0, n_total_walkers),    # L
         np.random.uniform(0.01, 0.9, n_total_walkers),    # y_mort

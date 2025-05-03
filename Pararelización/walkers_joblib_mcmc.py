@@ -29,7 +29,6 @@ target_white = 0.4   # Cobertura deseada para margaritas blancas
 results = []  # Lista para almacenar tiempos y errores
 
 for n_walkers in tqdm(walker_values, desc="Evaluando número de walkers (Joblib)"):
-    np.random.seed(42)  # Fijamos la semilla para reproducibilidad
     initial_positions = np.column_stack([
         np.random.uniform(0.1, 3.0, n_walkers),    # L
         np.random.uniform(0.01, 0.9, n_walkers),    # y_mort
