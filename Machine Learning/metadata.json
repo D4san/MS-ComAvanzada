@@ -1,0 +1,16 @@
+{
+  "column_names": [
+    "flux_0.838um", "flux_0.867um", "flux_0.904um", "flux_0.941um", "flux_0.978um", 
+    "flux_1.015um", "flux_1.052um", "flux_1.118um", "flux_1.208um", "flux_1.305um", 
+    "flux_1.409um", "flux_1.520um", "flux_1.666um", 
+    "T_iso", "log10_X_H2O", "log10_X_HCN", "log10_X_NH3", "log10_kappa_cl"
+  ],
+  "column_ranges": {
+    "T_iso": ["min_val", "max_val"],
+    "log10_X_H2O": [-13, 0],
+    "log10_X_HCN": [-13, 0],
+    "log10_X_NH3": [-13, 0],
+    "log10_kappa_cl": [-13, 0]
+  },
+  "column_colors": {}
+}
