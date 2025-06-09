@@ -1,145 +1,182 @@
+#!/usr/bin/env python3
+"""
+Script para calcular grupos π de espectros de tránsito y ajustar una expresión simbólica
+usando SymbolFit + PySRRegressor, entrenando por MSE (loss) en lugar de RMSE.
+"""
+import os
 import numpy as np
-from symbolfit import SymbolicRegressor
-from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
+import multiprocessing
+from symbolfit.symbolfit import SymbolFit
+from pysr import PySRRegressor
+from calc_pis import setup_opacity_interpolators, calc_pis_for_sample
 from sklearn.metrics import mean_squared_error
 
-from utils import load_data, load_metadata
-from calc_pis import calc_pis
-
-# --- Configuración ---
-LAMBDA_INDEX = 0  # Índice de la banda a ajustar (e.g., 0 para la primera banda)
-N_SPLITS_KFOLD = 5
-MAXSIZE_REGRESSOR = 12
-TIMEOUT_REGRESSOR = 3600  # 1 hora
-
-# --- Cargar datos y metadatos ---
-print("Cargando datos...")
-# Asegúrate de que los archivos .npy y metadata.json estén en el directorio correcto
-# o ajusta las rutas.
-TRAINING_DATA_PATH = "../training.npy"
-TESTING_DATA_PATH = "../testing.npy"
-METADATA_PATH = "../metadata.json"
-
-training_data = load_data(TRAINING_DATA_PATH)
-testing_data = load_data(TESTING_DATA_PATH)
-metadata = load_metadata(METADATA_PATH)
-
-# Extraer flujos y parámetros físicos del conjunto de entrenamiento
-F_train = training_data[:, :13]
-T_train = training_data[:, 13]
-logH2O_train = training_data[:, 14]
-logHCN_train = training_data[:, 15]
-logNH3_train = training_data[:, 16]
-logkcl_train = training_data[:, 17]
-
-# Extraer flujos y parámetros físicos del conjunto de prueba
-F_test = testing_data[:, :13]
-T_test = testing_data[:, 13]
-logH2O_test = testing_data[:, 14]
-logHCN_test = testing_data[:, 15]
-logNH3_test = testing_data[:, 16]
-logkcl_test = testing_data[:, 17]
-
-# --- Cargar tablas de opacidad (Placeholder) ---
-# Esta parte es crucial y depende de cómo tengas almacenadas tus tablas de opacidad.
-# Debes cargar kappa_j(lambda_i) para H2O, HCN, NH3.
-# Ejemplo de estructura para kapp_tables:
-# kapp_tables = {
-#     "H2O": np.random.rand(13, len(T_train)), # (n_lambdas, n_samples)
-#     "HCN": np.random.rand(13, len(T_train)),
-#     "NH3": np.random.rand(13, len(T_train))
-# }
-# Por ahora, usaremos un placeholder. ¡DEBES REEMPLAZAR ESTO!
-print("ADVERTENCIA: Usando tablas de opacidad placeholder. Debes reemplazarlas.")
-kapp_tables_train = {
-    "H2O": np.random.rand(len(T_train)), # Para una sola banda, necesitamos (n_samples,)
-    "HCN": np.random.rand(len(T_train)),
-    "NH3": np.random.rand(len(T_train))
+# Parámetros
+TRAIN_FILE    = 'data/training.npy'
+OPACITY_FILES = {
+    'H2O': 'data/opacH2O.dat',
+    'HCN': 'data/opacHCN.dat',
+    'NH3': 'data/opacNH3.dat',
 }
-kapp_tables_test = {
-    "H2O": np.random.rand(len(T_test)),
-    "HCN": np.random.rand(len(T_test)),
-    "NH3": np.random.rand(len(T_test))
-}
+LAMBDA_I    = 4      # índice de la banda (0-based)
+NUM_SAMPLES = 100_000   # número de muestras para entrenar
+SEED        = None     # reproducibilidad
 
-# --- Calcular grupos Pi para el conjunto de entrenamiento ---
-print(f"Calculando grupos Pi para la banda {LAMBDA_INDEX} (entrenamiento)...")
-Pi1_train, Pi2_train, Pi3_train, _ = calc_pis(
-    T_train, logH2O_train, logHCN_train, logNH3_train, logkcl_train, 
-    kapp_tables_train, lambda_i=LAMBDA_INDEX
+# 1) Cargar datos
+if not os.path.isfile(TRAIN_FILE):
+    raise RuntimeError(f"No se encontró {TRAIN_FILE}")
+arr = np.load(TRAIN_FILE)
+n_bands = arr.shape[1] - 5  # asumimos 5 columnas finales: T, logH2O, logHCN, logNH3, logkcl
+if not (0 <= LAMBDA_I < n_bands):
+    raise ValueError(f"LAMBDA_I debe estar entre 0 y {n_bands-1}")
+print(f"Cargadas {arr.shape[0]} muestras, {n_bands} bandas de profundidad")
+
+# 2) Extraer M (profundidad de tránsito) de la columna correspondiente
+M = arr[:, LAMBDA_I]
+print(f"Profundidad M: min={M.min():.3e}, max={M.max():.3e}")
+
+# 3) Desempaquetar parámetros atmosféricos (últimas 5 columnas)
+T      = arr[:, -5]
+logH2O = arr[:, -4]
+logHCN = arr[:, -3]
+logNH3 = arr[:, -2]
+logkcl = arr[:, -1]
+
+# 4) Calcular π-grupos
+interps = setup_opacity_interpolators(
+    OPACITY_FILES['H2O'],
+    OPACITY_FILES['HCN'],
+    OPACITY_FILES['NH3'],
+)
+pi1, pi2, pi3, pi4 = calc_pis_for_sample(
+    T, logH2O, logHCN, logNH3, logkcl,
+    LAMBDA_I, interps
+)
+pi1 = np.atleast_1d(pi1)
+pi2 = np.atleast_1d(pi2)
+if np.isscalar(pi3) or pi3.shape != pi1.shape:
+    pi3 = np.full_like(pi1, pi3)
+pi4 = np.atleast_1d(pi4)
+print(f"π shapes: π1{pi1.shape}, π2{pi2.shape}, π3{pi3.shape}, π4{pi4.shape}")
+
+# 5) Depuración rápida (opcional)
+plt.figure(figsize=(5,4))
+plt.scatter(1/pi1, np.log10(pi2), c=M, s=4, cmap='viridis')
+plt.colorbar(label='Profundidad M')
+plt.xlabel('1/π₁'); plt.ylabel('log₁₀ π₂')
+plt.title(f'Banda {LAMBDA_I}: π₁ vs log₁₀ π₂')
+plt.tight_layout()
+plt.show()
+
+# 6) Preparar X, y
+X = np.vstack([pi1, pi2, pi3, pi4]).T
+y = np.sqrt(2*M)
+
+# 7) Filtrar no finitos
+mask = np.isfinite(X).all(axis=1) & np.isfinite(y)
+if not mask.all():
+    print(f"Eliminando {np.count_nonzero(~mask)} filas no finitas")
+    X, y = X[mask], y[mask]
+
+# 8) Submuestreo aleatorio
+rng = np.random.default_rng(SEED)
+if X.shape[0] > NUM_SAMPLES:
+    idx = rng.choice(X.shape[0], size=NUM_SAMPLES, replace=False)
+    X, y = X[idx], y[idx]
+print(f"Entrenamiento: X.shape={X.shape}, y.shape={y.shape}")
+
+# 9) Configurar PySRRegressor para optimizar MSE (loss)
+cores = multiprocessing.cpu_count()
+pysr_config = PySRRegressor(
+    model_selection = 'accuracy',
+    niterations = 400,
+    maxsize = 40,
+    binary_operators = [
+        '+', '*', '/'
+                     ],
+    unary_operators = [
+        'log',
+        'sqrt',
+    ],
+    nested_constraints = {
+        'sqrt': {'sqrt': 0, 'log': 0, '*': 2},
+        'log':  {'sqrt': 2, 'log': 0, '*': 2},
+        '*':    {'sqrt': 2, 'log': 2, '*': 2},
+    },
+    elementwise_loss='loss(y, y_pred, weights) = (y - y_pred)^2 * weights',
 )
 
-# Construir matriz de características X_train y vector objetivo y_train
-X_train = np.column_stack([Pi1_train, Pi2_train, np.full_like(Pi1_train, Pi3_train)])
-# Asumimos que F_train[:, LAMBDA_INDEX] es la profundidad de tránsito adimensional
-y_train = F_train[:, LAMBDA_INDEX] 
-
-print(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
-
-# --- Configurar y entrenar SymbolicRegressor ---
-print("Configurando SymbolicRegressor...")
-model = SymbolicRegressor(
-    operators=["+", "-", "*", "/", "log", "pow"],
-    loss="mse",
-    maxsize=MAXSIZE_REGRESSOR,
-    uncertainties=True,
-    n_jobs=-1, # Usar todos los cores disponibles
-    timeout=TIMEOUT_REGRESSOR
+# 10) Configurar SymbolFit
+model = SymbolFit(
+    x=X, y=y,
+    y_up=np.zeros_like(y), y_down=np.zeros_like(y),
+    pysr_config = pysr_config,
+    max_complexity=20,
+    input_rescale=False,
+    scale_y_by=None,
+    fit_y_unc=False,
+    loss_weights = None
 )
 
-print("Entrenando modelo...")
-model.fit(X_train, y_train)
-expr_best = model.get_best()
-print("Mejor expresión simbólica encontrada:", expr_best)
-if hasattr(expr_best, 'sympy_format'):
-    print("Formato Sympy:", expr_best.sympy_format)
-if hasattr(expr_best, 'numpy_format'):
-    print("Formato Numpy:", expr_best.numpy_format)
+# 11) Entrenar y guardar resultados
+print("Entrenando regresión simbólica optimizando MSE…")
+model.fit()
+os.makedirs('results/fit', exist_ok=True)
+os.makedirs('results/figures', exist_ok=True)
+model.save_to_csv(output_dir='results/fit')
+model.plot_to_pdf(output_dir='results/figures', plot_logy=False, plot_logx=False)
 
-# --- Evaluar en el conjunto de prueba ---
-print(f"Calculando grupos Pi para la banda {LAMBDA_INDEX} (prueba)...")
-Pi1_test, Pi2_test, Pi3_test, _ = calc_pis(
-    T_test, logH2O_test, logHCN_test, logNH3_test, logkcl_test, 
-    kapp_tables_test, lambda_i=LAMBDA_INDEX
-)
-X_test = np.column_stack([Pi1_test, Pi2_test, np.full_like(Pi1_test, Pi3_test)])
-y_test = F_test[:, LAMBDA_INDEX]
+# 12) Extraer la mejor fórmula y calcular MSE de entrenamiento
+import pandas as pd
+from sklearn.metrics import mean_squared_error # Idealmente, esta importación va al inicio del archivo.
 
-print(f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
+# Cargar el archivo de candidatos de forma robusta
+candidates_csv_file = os.path.join('results/fit', 'candidates_reduced.csv')
+if not os.path.isfile(candidates_csv_file):
+    raise FileNotFoundError(f"Archivo de candidatos no encontrado: {candidates_csv_file}")
+df = pd.read_csv(candidates_csv_file)
 
-y_pred = model.predict(X_test)
-mse_test = mean_squared_error(y_test, y_pred)
-print(f"MSE en el conjunto de prueba: {mse_test:.6e}")
+# Encontrar la columna de la expresión
+# 'Parameterized equation, unscaled' es la esperada según el CSV de ejemplo.
+expr_col_options = ['Parameterized equation, unscaled', 'expression', 'equation', 'Equation', 'symbol']
+expr_col = None
+for col in expr_col_options:
+    if col in df.columns:
+        expr_col = col
+        break
+if expr_col is None:
+    print(f"Columnas disponibles en {candidates_csv_file}: {df.columns.tolist()}") # Ayuda para depuración
+    raise KeyError(f"No se encontró la columna de expresión en {df.columns.tolist()}. Se buscaron: {expr_col_options}")
 
-# --- Validación cruzada (opcional pero recomendado) ---
-print(f"Realizando validación cruzada con {N_SPLITS_KFOLD} folds...")
-kf = KFold(n_splits=N_SPLITS_KFOLD, shuffle=True, random_state=42)
-mse_cv_scores = []
+best = df.iloc[0]  # Asumir que la primera fila es la mejor
+expr = best[expr_col]
 
-for fold, (train_idx, val_idx) in enumerate(kf.split(X_train, y_train)):
-    print(f"  Fold {fold+1}/{N_SPLITS_KFOLD}")
-    X_fold_train, X_fold_val = X_train[train_idx], X_train[val_idx]
-    y_fold_train, y_fold_val = y_train[train_idx], y_train[val_idx]
-    
-    model_cv = SymbolicRegressor(
-        operators=["+", "-", "*", "/", "log", "pow"],
-        loss="mse",
-        maxsize=MAXSIZE_REGRESSOR,
-        uncertainties=False, # Más rápido para CV
-        n_jobs=-1,
-        timeout=TIMEOUT_REGRESSOR // N_SPLITS_KFOLD # Reducir timeout por fold
-    )
-    model_cv.fit(X_fold_train, y_fold_train)
-    y_fold_pred = model_cv.predict(X_fold_val)
-    mse_fold = mean_squared_error(y_fold_val, y_fold_pred)
-    mse_cv_scores.append(mse_fold)
-    print(f"    MSE del fold: {mse_fold:.6e}")
+# Obtener el RMSE directamente del CSV.
+# La columna 'RMSE' está presente en el archivo candidates_reduced.csv.
+mse_from_csv = best.get('RMSE', np.nan) # Usar np.nan de numpy que debe estar importado
+if pd.isna(mse_from_csv):
+    print(f"Advertencia: 'RMSE' no encontrado o es NaN en la fila del mejor candidato de {candidates_csv_file}.")
+    # Considerar un fallback si es necesario, ej: mse_from_csv = best.get('loss', np.nan) / X.shape[0] # X debe estar en ámbito
 
-print(f"MSE promedio de validación cruzada: {np.mean(mse_cv_scores):.6e} +/- {np.std(mse_cv_scores):.6e}")
+# Calcular MSE con sklearn para verificación (model, X, y deben estar en el ámbito)
+try:
+    y_pred = model.predict(X) # 'model' y 'X' deben estar en el ámbito
+    mse_sklearn_verification = mean_squared_error(y, y_pred) # 'y' debe estar en el ámbito
+except Exception as e:
+    print(f"Advertencia: No se pudo calcular MSE con sklearn para verificación: {e}")
+    mse_sklearn_verification = np.nan # Marcar como no disponible si falla
 
-# --- Guardar resultados y gráficos (Placeholder) ---
-print("Guardando resultados y gráficos (placeholder)...")
-# Aquí deberías guardar la mejor expresión, los scores, y generar gráficos como el Pareto frontier.
-# Ejemplo: model.plot_pareto(output_file="../figures/pareto_band_" + str(LAMBDA_INDEX) + ".png")
+# Guardar resultados
+formula_out_path = os.path.join('results/fit', 'formula.txt')
+mse_out_path = os.path.join('results/fit', 'mse.txt')
 
-print("Script fit_band.py completado.")
+with open(formula_out_path, 'w') as f:
+    f.write(expr)
+with open(mse_out_path, 'w') as f:
+    f.write(str(mse_from_csv)) # Guardar el MSE del CSV
+
+print(f"Mejor fórmula ({expr_col}): {expr}")
+print(f"MSE (desde CSV columna 'RMSE'): {mse_from_csv if not pd.isna(mse_from_csv) else 'No disponible o NaN'}")
+if not pd.isna(mse_sklearn_verification):
+    print(f"MSE (sklearn para verificación): {mse_sklearn_verification:.4e}")

@@ -1,16 +1,38 @@
-{
-  "column_names": [
-    "flux_0.838um", "flux_0.867um", "flux_0.904um", "flux_0.941um", "flux_0.978um", 
-    "flux_1.015um", "flux_1.052um", "flux_1.118um", "flux_1.208um", "flux_1.305um", 
-    "flux_1.409um", "flux_1.520um", "flux_1.666um", 
-    "T_iso", "log10_X_H2O", "log10_X_HCN", "log10_X_NH3", "log10_kappa_cl"
-  ],
-  "column_ranges": {
-    "T_iso": ["min_val", "max_val"],
-    "log10_X_H2O": [-13, 0],
-    "log10_X_HCN": [-13, 0],
-    "log10_X_NH3": [-13, 0],
-    "log10_kappa_cl": [-13, 0]
+[
+  {
+    "question": "¿Qué diferencia fundamental en la formulación de la aceleración en un sistema de N cuerpos frente al caso de dos cuerpos justifica que sólo en éste último aparezcan nuevas constantes de movimiento como $h$, $\\\\varepsilon$ y $e$?",
+    "answer": "Para N>2 la aceleración de cada cuerpo es la suma de las fuerzas de todos los demás: $$\\\\ddot{\\\\mathbf r}_i = G\\\\sum_{j\\\\ne i} m_j \\\\frac{\\\\mathbf r_{ji}}{r_{ji}^3}\\\\,, $$ lo que conserva sólo las integrales globales de momento lineal y angular y no admite integrabilidad completa. En cambio, para N=2, en coordenadas relativas, $$\\\\ddot{\\\\mathbf r} = -\\\\mu\\\\frac{\\\\mathbf r}{r^3}\\\\,,\\\\quad \\\\mu=G(m_1+m_2)\\\\,, $$ se tiene un campo central con tres nuevas constantes de movimiento independientes ($h$, $\\\\varepsilon$, $e$), lo que permite resolver por cuadraturas."
   },
-  "column_colors": {}
-}
+  {
+    "question": "¿Qué implicación geométrica tiene la conservación del momento angular específico $h$ y cómo se relaciona esto con la Segunda Ley de Kepler?",
+    "answer": "El vector $\\\\mathbf h = \\\\mathbf r \\\\times \\\\mathbf v$ permanece constante en dirección y magnitud, lo que implica que la órbita está contenida en un plano perpendicular a $\\\\mathbf h$. Esta planaridad conduce a que el radio vector barre áreas iguales en tiempos iguales, pues la velocidad areal es $$\\\\dot A = \\\\tfrac12\\\\lvert\\\\mathbf h\\\\rvert\\\\,, $$ constante."
+  },
+  {
+    "question": "¿Cómo se utiliza el signo de la energía específica $\\\\varepsilon = \\\\tfrac12 v^2 - \\\\mu/r$ para clasificar las trayectorias orbitales?",
+    "answer": "El signo de $\\\\varepsilon$ determina la cónica resultante:\n\n• $\\\\varepsilon<0$: Elipse (o círculo), órbita cerrada y ligada.\n\n• $\\\\varepsilon=0$: Parábola, trayectoria de escape justo al límite.\n\n• $\\\\varepsilon>0$: Hipérbola, trayectoria abierta con velocidad residual."
+  },
+  {
+    "question": "¿Por qué la dirección y magnitud del vector de excentricidad $\\\\mathbf e$ describen completamente la forma y orientación de una órbita, junto con el semilatus rectum $p$?",
+    "answer": "La dirección de $\\\\mathbf e$ apunta al periapsis y fija la orientación de la cónica dentro de su plano. La magnitud $e=\\\\lvert\\\\mathbf e\\\\rvert$ determina la forma (círculo, elipse, parábola u hipérbola). El semilatus rectum $p = h^2/\\\\mu$ define la escala radial. Con $(p,e)$ la ecuación polar $$r = \\\\frac{p}{1+e\\\\cos f}$$ describe completamente la geometría intrínseca de la trayectoria."
+  },
+  {
+    "question": "¿Qué ventajas prácticas ofrece la ecuación polar $$r = \\\\frac{p}{1+e\\\\cos f}$$ frente a su representación en coordenadas cartesianas?",
+    "answer": "La forma polar es compacta, se refiere directamente al foco (centro de masas), facilita la visualización mediante un barrido de $f$, y emplea parámetros $p$ y $e$ con interpretación física clara. Además, deriva de la ecuación de Binet, uniendo dinámica y geometría sin álgebra compleja."
+  },
+  {
+    "question": "¿Cómo se relacionan las órbitas de cada cuerpo con la órbita relativa en un sistema binario?",
+    "answer": "En un sistema binario, ambas órbitas individuales tienen la misma excentricidad $e$ y el mismo periodo $P$. Sus semiejes mayores satisfacen $$a_1/a_2 = m_2/m_1$$ y sus posiciones cumplen $$m_1\\\\mathbf r_1 + m_2\\\\mathbf r_2 = \\\\mathbf0\\\\,, $$ de modo que siempre permanecen diametralmente opuestos respecto al baricentro."
+  },
+  {
+    "question": "¿Por qué es ventajoso describir una órbita mediante seis elementos orbitales $(p,e,i,\\\\Omega,\\\\omega,f)$ en lugar de las coordenadas y velocidades cartesianas $(x,y,z,\\\\dot x,\\\\dot y,\\\\dot z)$?",
+    "answer": "Los elementos orbitales definen la geometría y orientación de la órbita de forma compacta: cinco de ellos son constantes en ausencia de perturbaciones y definen tamaño, forma e inclinación, mientras que $f(t)$ varía con el tiempo para indicar la posición. A partir de estos seis parámetros se reconstruyen las coordenadas y velocidades en cualquier instante, facilitando predicciones y análisis seculares."
+  },
+  {
+    "question": "¿Por qué pasar de $e=0.99$ a $e=1$ cambia radicalmente la naturaleza de la trayectoria orbital?",
+    "answer": "Porque $e=1$ marca la transición entre órbitas ligadas ($e<1$, energía negativa y trayectoria cerrada) y de escape ($e\\\\ge1$, energía no negativa y trayectoria abierta). Aunque numéricamente cercanos, en $e=1$ la energía es cero y el cuerpo ya no retorna, mientras que en $e=0.99$ permanece ligado."
+  },
+  {
+    "question": "¿Por qué es imprescindible conocer las componentes de velocidad $(\\\\dot x,\\\\dot y,\\\\dot z)$ además de la posición $(x,y,z)$ para describir completamente el estado dinámico de un cuerpo en órbita?",
+    "answer": "Porque posición y velocidad juntas forman el espacio de fases de seis dimensiones, que define el estado dinámico completo. Con ambas se puede integrar la trayectoria hacia el futuro o pasado, calcular energía y momento angular, y planificar maniobras como inserciones y asistencias gravitatorias."
+  }
+]
