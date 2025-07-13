@@ -4,3 +4,4 @@ symbolfit
 sympy
 matplotlib
 scikit-learn
+pysr

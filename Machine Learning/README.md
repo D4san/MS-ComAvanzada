@@ -1,9 +1,25 @@
 ````markdown
 #README: Regresión Simbólica de Espectros de Tránsito (Márquez‐Neila et al. + Matchev et al.)
 
-Este documento describe paso a paso cómo reproducir el flujo de trabajo para construir grupos adimensionales (π), aplicar regresión simbólica a espectros de tránsito de exoplanetas y comparar resultados con los publicados en Matchev et al. (2022). Se basa en el dataset de Márquez‐Neila et al. (2018), que contiene espectros sintéticos de “hot Jupiters” generados con TauREx o método similar.
+Este documento describe paso a paso cómo reproducir el flujo de trabajo para construir grupos adimensionales (π), aplicar regresión simbólica a espectros de tránsito de exoplanetas y comparar resultados con los publicados en el influyente trabajo de Matchev et al. (2022), "Analytical Modeling of Exoplanet Transit Spectroscopy with Dimensional Analysis and Symbolic Regression". <mcreference link="https://arxiv.org/abs/2203.09200" index="1">1</mcreference> <mcreference link="https://iopscience.iop.org/article/10.3847/1538-4357/ac658c" index="2">2</mcreference> Dicho estudio utiliza el análisis dimensional y la regresión simbólica para derivar expresiones analíticas para los espectros de tránsito de exoplanetas, ofreciendo una comprensión más profunda de las degeneraciones de los parámetros. <mcreference link="https://arxiv.org/abs/2203.09200" index="1">1</mcreference> <mcreference link="https://iopscience.iop.org/article/10.3847/1538-4357/ac658c" index="2">2</mcreference>
+Este proyecto se basa en el dataset de Márquez‐Neila et al. (2018), que contiene espectros sintéticos de “hot Jupiters” generados con TauREx o un método similar, y busca replicar y extender los hallazgos de Matchev et al. (2022).
 
 ---
+
+## Descripción de los Scripts del Proyecto
+
+El proyecto se compone de varios scripts de Python, cada uno con una función específica en el flujo de trabajo:
+
+- **`calc_pis.py`**: Contiene funciones esenciales para utilidades de composición química (conversión de logaritmos a fracciones, cálculo de la masa molecular media) y para cargar e interpolar datos de opacidad de ExoTransmit. Su función principal es calcular los grupos Pi adimensionales (Π₁, Π₂, Π₃, Π₄) y graficar los datos de entrenamiento. Este script es fundamental para preparar los datos para la regresión simbólica.
+- **`evaluate.py`**: Incluye funciones y marcadores de posición para evaluar los modelos de regresión simbólica (Aproximaciones A y B) contra los datos de prueba. Calcula el Error Cuadrático Medio (MSE), compara los resultados con los de Matchev et al. (2022) y grafica los residuales. Destaca la necesidad de tablas de opacidad reales y una evaluación segura de las expresiones simbólicas.
+- **`fit_all.py`**: Un script diseñado para calcular los grupos Pi y la longitud de onda λ para las 13 bandas espectrales. Calcula la M analítica en el límite τ→∞, prepara los datos para la regresión, configura y entrena un modelo `PySRRegressor` optimizando el MSE, guarda los resultados y extrae la mejor fórmula y el MSE del archivo CSV de salida. Este script automatiza el proceso de ajuste para todas las bandas.
+- **`fit_band M_model.py`**: Similar a `fit_band.py`, pero calcula específicamente la M analítica en el límite τ→∞ para una sola banda. Prepara los datos, configura y entrena un modelo `PySRRegressor` optimizando el MSE, guarda los resultados y extrae la mejor fórmula y el MSE. Útil para análisis detallados de bandas individuales con el modelo M.
+- **`fit_band.py`**: Un script para calcular los grupos Pi para una sola banda espectral. Extrae la profundidad de tránsito M de los datos, prepara los datos para la regresión, configura y entrena un modelo `PySRRegressor` optimizando el MSE, guarda los resultados y extrae la mejor fórmula y el MSE del archivo CSV de salida. Permite un análisis enfocado en una banda específica.
+- **`utils.py`**: Contiene funciones de utilidad para cargar datos desde archivos `.npy` y metadatos desde un archivo JSON. Estas funciones son utilizadas por otros scripts para manejar la entrada y salida de datos de manera eficiente.
+
+---
+
+## 1. Estructura general del proyecto
 
 ## 1. Estructura general del proyecto
 
@@ -373,8 +389,9 @@ Una vez obtenidas las fórmulas simbólicas para cada enfoque, se recomienda:
 2. Instalar dependencias mínimas:
 
    ```bash
-   pip install numpy pandas symbolfit sympy matplotlib
+   pip install numpy pandas symbolfit sympy matplotlib scikit-learn pysr
    ```
+   **Nota sobre PySR:** PySR requiere Julia para funcionar. Asegúrese de tener Julia instalado y accesible en su PATH. Puede encontrar instrucciones de instalación en el <mcurl name="sitio web oficial de Julia" url="https://julialang.org/downloads/"></mcurl> y en la <mcurl name="documentación de PySR" url="https://github.com/MilesCranmer/PySR#installation"></mcurl>. <mcreference link="https://github.com/MilesCranmer/PySR" index="3">3</mcreference> La primera vez que importe `PySRRegressor`, se instalarán automáticamente las dependencias de Julia necesarias. <mcreference link="https://github.com/MilesCranmer/PySR" index="3">3</mcreference>
 3. Conseguir las tablas de opacidad molecular (H₂O, HCN, NH₃) compatibles con Heng & Kitzmann (2017). Puede usarse el repositorio oficial de Heng & Kitzmann o datos provistos en el suplemento de Márquez‐Neila et al. (2018).
 
 ### 8.2. Cargar datos y metadatos
