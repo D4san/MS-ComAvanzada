@@ -1,4 +1,3 @@
-````markdown
 #README: Regresión Simbólica de Espectros de Tránsito (Márquez‐Neila et al. + Matchev et al.)
 
 Este documento describe paso a paso cómo reproducir el flujo de trabajo para construir grupos adimensionales (π), aplicar regresión simbólica a espectros de tránsito de exoplanetas y comparar resultados con los publicados en el influyente trabajo de Matchev et al. (2022), "Analytical Modeling of Exoplanet Transit Spectroscopy with Dimensional Analysis and Symbolic Regression". <mcreference link="https://arxiv.org/abs/2203.09200" index="1">1</mcreference> <mcreference link="https://iopscience.iop.org/article/10.3847/1538-4357/ac658c" index="2">2</mcreference> Dicho estudio utiliza el análisis dimensional y la regresión simbólica para derivar expresiones analíticas para los espectros de tránsito de exoplanetas, ofreciendo una comprensión más profunda de las degeneraciones de los parámetros. <mcreference link="https://arxiv.org/abs/2203.09200" index="1">1</mcreference> <mcreference link="https://iopscience.iop.org/article/10.3847/1538-4357/ac658c" index="2">2</mcreference>
@@ -690,14 +689,3 @@ A continuación se esquematiza el flujo completo de entrenamiento usando SymbolF
   → Bases de datos de opacidad molecular $\kappa_j(\lambda)$.
 
 ---
-
-## 13. Notas finales
-
-Este README describe de manera **completa y ordenada** todo lo que se debe hacer para:
-
-1. Cargar y entender el dataset de Márquez‐Neila et al. (2018).
-2. Calcular la **masa molecular media** y los **grupos adimensionales $\Pi$**.
-3. Aplicar **regresión simbólica** (symbolic regression) con dos aproximaciones: una para banda fija y otra incluyendo $\lambda$.
-4. Comparar los resultados con los publicados en Matchev et al. (2022), evaluando formas analíticas, coeficientes, errores y degeneraciones físicas.
-
-Siguiendo este documento podrás reproducir el flujo completo de “datos → π → regresión simbólica → comparación con la literatura” en un proyecto de exoplanetas. ¡Adelante!
