@@ -1,4 +1,4 @@
-#README: Regresión Simbólica de Espectros de Tránsito (Márquez‐Neila et al. + Matchev et al.)
+# Regresión Simbólica de Espectros de Tránsito (Márquez‐Neila et al. + Matchev et al.)
 
 Este documento describe paso a paso cómo reproducir el flujo de trabajo para construir grupos adimensionales (π), aplicar regresión simbólica a espectros de tránsito de exoplanetas y comparar resultados con los publicados en el influyente trabajo de Matchev et al. (2022), "Analytical Modeling of Exoplanet Transit Spectroscopy with Dimensional Analysis and Symbolic Regression". <mcreference link="https://arxiv.org/abs/2203.09200" index="1">1</mcreference> <mcreference link="https://iopscience.iop.org/article/10.3847/1538-4357/ac658c" index="2">2</mcreference> Dicho estudio utiliza el análisis dimensional y la regresión simbólica para derivar expresiones analíticas para los espectros de tránsito de exoplanetas, ofreciendo una comprensión más profunda de las degeneraciones de los parámetros. <mcreference link="https://arxiv.org/abs/2203.09200" index="1">1</mcreference> <mcreference link="https://iopscience.iop.org/article/10.3847/1538-4357/ac658c" index="2">2</mcreference>
 Este proyecto se basa en el dataset de Márquez‐Neila et al. (2018), que contiene espectros sintéticos de “hot Jupiters” generados con TauREx o un método similar, y busca replicar y extender los hallazgos de Matchev et al. (2022).
@@ -28,64 +28,64 @@ El proyecto se compone de varios scripts de Python, cada uno con una función es
      - `testing.npy` (también 18 columnas)  
      - `metadata.json` indicando nombres de columnas, rangos y colores.
    - Columnas por fila (índice 0–17):  
-     1–13. Valores de flujo normalizado \(M(\lambda_i)\) en las 13 bandas WFC3 (desde 0.838 μm hasta 1.666 µm).  
-     14. \(T\) (K) – temperatura isoterma.  
-     15. \(\log_{10} X_{\mathrm{H_2O}}\) (rango \([-13,0]\)).  
-     16. \(\log_{10} X_{\mathrm{HCN}}\) (rango \([-13,0]\)).  
-     17. \(\log_{10} X_{\mathrm{NH_3}}\) (rango \([-13,0]\)).  
-     18. \(\log_{10} \kappa_{\rm cl}\) (opacidad “gray cloud”, rango \([-13,0]\)).
+     1–13. Valores de flujo normalizado $M(\lambda_i)$ en las 13 bandas WFC3 (desde 0.838 μm hasta 1.666 µm).  
+     14. $T$ (K) – temperatura isoterma.  
+     15. $\log_{10} X_{\mathrm{H_2O}}$ (rango $[-13,0]$).  
+     16. $\log_{10} X_{\mathrm{HCN}}$ (rango $[-13,0]$).  
+     17. $\log_{10} X_{\mathrm{NH_3}}$ (rango $[-13,0]$).  
+     18. $\log_{10} \kappa_{\rm cl}$ (opacidad “gray cloud”, rango $[-13,0]$).
 
 2. **Objetivos principales**  
-   1. Construir los **grupos adimensionales \(\Pi\)** a partir de los parámetros físicos originales y constantes asociadas al exoplaneta prototipo (WASP-12b).  
+   1. Construir los **grupos adimensionales $\Pi$** a partir de los parámetros físicos originales y constantes asociadas al exoplaneta prototipo (WASP-12b).  
    2. Usar **regresión simbólica** (SymbolFit / PySR) para reencontrar la forma analítica asintótica de Matchev et al. (2022).  
    3. Probar dos alternativas de regresión simbólica:  
-      - **(A)** Regresión para una única banda (p. ej. \(\lambda_1 = 0.867\,\mu\text{m}\)).  
-      - **(B)** Incluir la longitud de onda \(\lambda\) como entrada adicional en los grupos \(\Pi\).  
+      - **(A)** Regresión para una única banda (p. ej. $\lambda_1 = 0.867\,\mu\text{m}$).  
+      - **(B)** Incluir la longitud de onda $\lambda$ como entrada adicional en los grupos $\Pi$.  
    4. Proponer métricas/pruebas para **comparar** con los resultados originales de Matchev et al. (2022).
 
 ---
 
 ## 2. Definición del exoplaneta prototipo y parámetros fijos
 
-Para reproducir los grupos \(\Pi\) de Matchev et al. (2022), se asume que todos los espectros de Márquez‐Neila et al. (2018) provienen de un mismo “hot Jupiter” (WASP-12b) con parámetros atmosféricos fijos. Esos valores aparecen en la sección 2.2 de Márquez‐Neila et al. (2018):
+Para reproducir los grupos $\Pi$ de Matchev et al. (2022), se asume que todos los espectros de Márquez‐Neila et al. (2018) provienen de un mismo “hot Jupiter” (WASP-12b) con parámetros atmosféricos fijos. Esos valores aparecen en la sección 2.2 de Márquez‐Neila et al. (2018):
 
 - Radio planetario  
-  \[
+  $$
     R_0 = 1.79\,R_{\rm J} \quad\bigl(\approx 1.28\times10^8\,\mathrm{m}\bigr).
-  \]
+  $$
 - Radio estelar  
-  \[
+  $$
     R_S = 1.57\,R_\odot \quad\bigl(\approx 1.09\times10^9\,\mathrm{m}\bigr).
-  \]
+  $$
 - Gravedad superficial  
-  \[
+  $$
     g = 9.77\;\mathrm{m/s^2}.
-  \]
+  $$
 - Presión de referencia  
-  \[
+  $$
     P_0 = 10\,\mathrm{bar} = 1\times10^6\,\mathrm{Pa}.
-  \]
+  $$
 - Masa molecular media (asumida “solar” H₂–He)  
-  \[
+  $$
     m_{\rm H_2\text{+}He} \;\approx\; 2.3\;m_{\rm amu}, 
     \quad m_{\rm amu} = 1.6605\times10^{-27}\,\mathrm{kg}.
-  \]
-  En la práctica se calcula a partir de las fracciones molares de H₂ y He (se asume \(X_{\mathrm{H_2}}:X_{\mathrm{He}}=0.85:0.15\) en el remanente de la atmósfera).
+  $$
+  En la práctica se calcula a partir de las fracciones molares de H₂ y He (se asume $X_{\mathrm{H_2}}:X_{\mathrm{He}}=0.85:0.15$ en el remanente de la atmósfera).
 
-> **Observación:** Aunque Matchev et al. (2022) a veces citan \(m=2.4\,m_{\rm amu}\) para simplificar, lo más común en “hot Jupiters” es usar \(m\approx2.3\,m_{\rm amu}\). Nosotros recomiendamos calcularlo directamente con el procedimiento explicado en la sección siguiente, partiendo de las abundancias (mixing ratios) de H₂O, HCN, NH₃ y asignando el remanente H₂+He en proporción 0.85/0.15.
+> **Observación:** Aunque Matchev et al. (2022) a veces citan $m=2.4\,m_{\rm amu}$ para simplificar, lo más común en “hot Jupiters” es usar $m\approx2.3\,m_{\rm amu}$. Nosotros recomiendamos calcularlo directamente con el procedimiento explicado en la sección siguiente, partiendo de las abundancias (mixing ratios) de H₂O, HCN, NH₃ y asignando el remanente H₂+He en proporción 0.85/0.15.
 
 ---
 
-## 3. Cálculo de la masa molecular media \(\bar m_k\)
+## 3. Cálculo de la masa molecular media $\bar m_k$
 
-Para cada fila \(k\) del dataset (`training.npy`), extraemos:
+Para cada fila $k$ del dataset (`training.npy`), extraemos:
 
-1. \(\log_{10}X_{\mathrm{H_2O},k}\), \(\log_{10}X_{\mathrm{HCN},k}\), \(\log_{10}X_{\mathrm{NH_3},k}\).  
-2. \(\log_{10}\kappa_{\rm cl,k}\) (opacidad de nubes grises).
+1. $\log_{10}X_{\mathrm{H_2O},k}$, $\log_{10}X_{\mathrm{HCN},k}$, $\log_{10}X_{\mathrm{NH_3},k}$.  
+2. $\log_{10}\kappa_{\rm cl,k}$ (opacidad de nubes grises).
 
 ### 3.1. Paso 1: conversiones de logarítmicos a fracciones lineales
 
-Sea \(\log_{10}X_{j,k}\) la última matriz (columnas 15–17 en cero‐base):
+Sea $\log_{10}X_{j,k}$ la última matriz (columnas 15–17 en cero‐base):
 
 ```python
 X_H2O_k = 10**(data[k, 14])
