@@ -20,8 +20,6 @@ El proyecto se compone de varios scripts de Python, cada uno con una función es
 
 ## 1. Estructura general del proyecto
 
-## 1. Estructura general del proyecto
-
 1. **Dataset de Márquez‐Neila et al. (2018)**
    - Carpetas:  
      - `training.npy` (79 999 muestras × 18 columnas)  
